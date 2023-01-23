@@ -1,6 +1,8 @@
 <?php
 
-use App\Models\Car;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Admin\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\Admin\HomeController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -14,58 +16,37 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-//supaya route rapih
-Route::resource('cars', CarController::class);
-
-Route::get('/', function(){
+Route::get('/', function () {
     return view('welcome');
 });
 
-// view all cars
-Route::get('/car', function(){
-    $cars = Car::all();
-    return view('car.index', compact('cars'));
-})->name('cars');
+Route::get('/dashboard', function () {
+    return view('dashboard');
+})->middleware(['auth', 'verified'])->name('dashboard');
 
-// view single car
-Route::get('/car/detail/{car:id}', function(Car $car){
-    return view('car.detail', compact('car'));
-})->name('car_detail');
-
-// Route::get('/car/detail/{id}', function($id){
-//     // $car = Car::findOrFail($id);
-//     // $car = Car::where('id', $id)->firstOrFail();
-//     // $car = Car::whereId($id)->firstOrFail();
-//     return view('car.detail', compact('car'));
-// })->name('car_detail');
-
-// form create
-Route::get('/car/create', function(){
-    return view('car.create');
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-// process create
-Route::post('/car/create/save', function(){
-    $data = request()->all();
-    $car = Car::create($data);
-    return redirect()->route('car_detail', compact('car'));
-});
+require __DIR__.'/auth.php';
 
-// process update
-Route::patch('/car/edit/save/{car:id}', function(Car $car){
-    $car->fill(request()->all());
-    $car->save();
-    return redirect()->route('car_detail', compact('car'));
-});
+//Admin
+Route::namespace('Admin')->prefix('admin')->name('admin.')->group(function(){
+    Route::namespace('Auth')->middleware('guest:admin')->group(function(){
+        //Login Route
+        Route::get('login', [AuthenticatedSessionController::class, 'create'])->name('login');
+        Route::post('login', [AuthenticatedSessionController::class, 'store'])->name('loginAdmin');
 
-// form update
-Route::get('/car/edit/{car:id}', function(Car $car){
-    return view('car.update', compact('car'));
-});
+        Route::get('/profile', [AuthenticatedSessionController::class, 'edit'])->name('profile.edit');
+        Route::patch('/profile', [AuthenticatedSessionController::class, 'update'])->name('profile.update');
+        Route::delete('/profile', [AuthenticatedSessionController::class, 'destroy'])->name('profile.destroy');
+    });
 
-// delete a car
-Route::get('/car/delete/{car:id}', function($car){
-    $car = Car::destroy($car);
+    Route::middleware('admin')->group(function(){
+        Route::get('dashboard', [HomeController::class, 'index'])->name('dashboard');
+    });
 
-    return redirect()->route('cars');
+    Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 });
