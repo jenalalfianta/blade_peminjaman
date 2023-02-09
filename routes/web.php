@@ -3,6 +3,7 @@
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Admin\HomeController;
+use App\Http\Controllers\Admin\JadwalController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -47,6 +48,8 @@ Route::namespace('Admin')->prefix('admin')->name('admin.')->group(function(){
     Route::middleware('admin')->group(function(){
         Route::get('dashboard', [HomeController::class, 'index'])->name('dashboard');
     });
+
+    Route::get('jadwal', [JadwalController::class, 'index'])->name('jadwal');
 
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 });
